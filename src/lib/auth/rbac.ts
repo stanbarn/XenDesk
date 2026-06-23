@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { Role } from "@/generated/prisma/enums";
+import { HttpError } from "@/lib/errors";
 
 /**
  * The authenticated identity passed into the service layer. Keeping this a
@@ -12,13 +13,9 @@ export type Actor = {
 };
 
 /** Thrown by guards; carries the HTTP status the API layer should return. */
-export class AuthError extends Error {
-  constructor(
-    public readonly status: 401 | 403,
-    message: string,
-  ) {
-    super(message);
-    this.name = "AuthError";
+export class AuthError extends HttpError {
+  constructor(status: 401 | 403, message: string) {
+    super(status, message);
   }
 }
 
