@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import type {
@@ -40,4 +41,14 @@ export function useAgents() {
 
 export function useCustomers() {
   return useSWR<CustomerSummary[]>("/customers");
+}
+
+/** Debounce a fast-changing value (e.g. a search box). */
+export function useDebounce<T>(value: T, delay = 300): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
 }
