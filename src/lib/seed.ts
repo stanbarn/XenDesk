@@ -1,18 +1,16 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import { Priority, Role, TicketStatus } from "@/generated/prisma/enums";
 import { hashPassword } from "@/lib/auth/password";
+import { DEMO_AGENT_EMAIL, DEMO_CUSTOMER_EMAIL, DEMO_PASSWORD } from "@/lib/demo";
 
 /**
  * Shared, idempotent demo-data seeder. Used by both the CLI seed script
  * (`npm run db:seed`) and the agent-only reseed endpoint. Wipes existing data
  * and recreates the deterministic sample set from the product design.
  *
- * All demo accounts share this password (documented in the README); the two
- * emails below back the "Enter as Agent / Customer" quick-login buttons.
+ * Demo credentials live in @/lib/demo (also used by the login quick-buttons).
  */
-export const DEMO_PASSWORD = "Password123!";
-export const DEMO_AGENT_EMAIL = "jordan.vega@xenfi.com";
-export const DEMO_CUSTOMER_EMAIL = "marcus.reyes@northgate.media";
+export { DEMO_PASSWORD } from "@/lib/demo";
 
 export type SeedSummary = {
   users: number;
