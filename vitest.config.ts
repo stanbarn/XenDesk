@@ -40,5 +40,21 @@ export default defineConfig({
     },
     // Tests share one database; run files serially to avoid write races.
     fileParallelism: false,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html"],
+      // Scope coverage to the testable backend (API + service + validation +
+      // auth logic). The UI, Auth.js glue, seed, and generated client are
+      // verified by running the app, not by unit tests.
+      include: [
+        "src/app/api/**/route.ts",
+        "src/lib/services/**",
+        "src/lib/validation/**",
+        "src/lib/api/http.ts",
+        "src/lib/auth/rbac.ts",
+        "src/lib/auth/password.ts",
+        "src/lib/errors.ts",
+      ],
+    },
   },
 });

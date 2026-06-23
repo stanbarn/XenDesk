@@ -40,6 +40,9 @@ yarn-error.log*
 # local Claude Code launch config (machine-specific absolute paths)
 /.claude
 
+# test coverage output
+/coverage
+
 # vercel
 .vercel
 

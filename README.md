@@ -173,9 +173,10 @@ below in one click.
 ## Tests & quality
 
 ```bash
-npm test          # Vitest (unit + integration)
-npm run typecheck # tsc --noEmit
-npm run lint      # ESLint
+npm test           # Vitest (unit + integration) — 62 tests
+npm run test:coverage  # same, with a V8 coverage report
+npm run typecheck  # tsc --noEmit
+npm run lint       # ESLint
 ```
 
 Integration tests use a separate database, derived from `.env`'s `DATABASE_URL`
@@ -187,10 +188,18 @@ docker exec xendesk-postgres psql -U xendesk -d xendesk -c "CREATE DATABASE xend
 TEST_DATABASE_URL="postgresql://xendesk:xendesk_dev_pw@localhost:5433/xendesk_test?schema=public" npm run db:deploy
 ```
 
-Coverage focuses on the brief's high-risk areas: password hashing/verification,
-the RBAC predicates, and ticket **state-change + ownership** flows (status
-changes, assignment validation, cross-customer access denial, dashboard
-aggregation).
+**62 tests** cover the brief's high-risk areas:
+
+- **Unit** — password hashing, RBAC predicates, every Zod schema, and the API
+  error-mapping wrapper (`ZodError → 400`, `HttpError → status`, `→ 500`).
+- **Integration** (real Postgres) — ticket state-change + ownership flows
+  (status changes, assignment validation, cross-customer 403, dashboard
+  aggregation), the user/tag services, and the API route handlers driven as a
+  given role (mocking only the session resolver).
+
+`test:coverage` scopes the report to the API + service + validation + auth
+logic (the UI and Auth.js glue are verified by running the app). Latest run:
+**~83% lines, ~81% branches** (core ticket service ~90%).
 
 **CI** (`.github/workflows/ci.yml`) provisions a Postgres service and runs
 lint → typecheck → migrate → test → build on every push and pull request.
