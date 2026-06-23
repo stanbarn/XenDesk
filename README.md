@@ -3,9 +3,9 @@
 An internal customer support & ticketing system for XenFi. Customers raise
 support tickets; agents triage, assign, reply to, and resolve them.
 
-> **Status:** Backend (data model, auth, RBAC, REST API, tests, CI) is complete
-> and verified. The frontend is being built against dedicated UI/UX designs and
-> is tracked separately.
+It's a single full-stack Next.js app: a typed REST API and service layer with
+server-enforced RBAC, and a Tailwind UI built to a high-fidelity design across
+both roles (11 screens).
 
 ---
 
@@ -19,6 +19,8 @@ support tickets; agents triage, assign, reply to, and resolve them.
 | Auth | **Auth.js (NextAuth v5), Credentials** | Email/password so reviewers can sign in with seeded demo accounts (no external OAuth setup). JWT sessions carry the user's role. |
 | Validation | **Zod** | One schema validates at the API boundary and infers the TypeScript types; enum schemas are derived from the Prisma enums so they can't drift. |
 | Passwords | **bcryptjs** | Pure-JS bcrypt, no native build step — reliable on serverless. |
+| UI | **Tailwind CSS v4 + lucide-react** | Design tokens map 1:1 to the handoff; small primitive set (Button, pills, chips, Avatar, fields). |
+| Data fetching | **SWR** | Client cache + revalidation; polls the ticket thread and dashboard for near-real-time updates without WebSockets. |
 | Tests | **Vitest** | Fast unit + integration tests against a real Postgres test database. |
 
 ### Architecture
@@ -27,15 +29,19 @@ It's a single full-stack Next.js app, but with a hard internal seam:
 
 ```
 src/
-  app/api/**/route.ts   HTTP layer — thin handlers: resolve identity, parse, delegate
-  lib/services/*        Business logic + RBAC enforcement (framework-agnostic, unit-tested)
-  lib/auth/rbac.ts      Pure authorization predicates (no Auth.js import)
-  lib/auth/session.ts   Auth.js-bound identity resolvers (requireActor/requireAgent)
-  lib/validation/*      Zod schemas (shared client/server)
-  lib/errors.ts         HttpError hierarchy (400/401/403/404/409)
-  lib/prisma.ts         Pooled Prisma client singleton
-prisma/                 schema, migrations, seed
-tests/                  unit + integration
+  app/(app)/**           Authenticated screens (role-guarded server pages)
+  app/login              Sign-in (split panel + demo quick-login)
+  app/api/**/route.ts    HTTP layer — thin handlers: resolve identity, parse, delegate
+  components/            Shell (sidebar/topbar), UI primitives, screen views
+  lib/services/*         Business logic + RBAC enforcement (framework-agnostic, unit-tested)
+  lib/auth/rbac.ts       Pure authorization predicates (no Auth.js import)
+  lib/auth/session.ts    Auth.js-bound identity resolvers (requireActor/requireAgent)
+  lib/validation/*       Zod schemas (shared client/server)
+  lib/hooks.ts           SWR data hooks (with polling)
+  lib/errors.ts          HttpError hierarchy (400/401/403/404/409)
+  lib/prisma.ts          Pooled Prisma client singleton
+prisma/                  schema, migrations, seed
+tests/                   unit + integration
 ```
 
 **Authorization is enforced server-side in the service layer, not in the UI.**
@@ -46,13 +52,15 @@ mocking Auth.js, and they are the single source of truth the routes rely on.
 
 ### Data model
 
-- **User** — `email`, `name`, `passwordHash`, `role` (`CUSTOMER` | `AGENT`).
-- **Ticket** — `title`, `description`, `status` (`OPEN` | `IN_PROGRESS` |
-  `RESOLVED`), `priority` (`LOW` | `MEDIUM` | `HIGH`), `customerId` (owner),
-  `agentId` (assignee, nullable).
+- **User** — `email`, `name`, `passwordHash`, `role` (`CUSTOMER` | `AGENT`),
+  `company` (customers).
+- **Ticket** — `number` (human code `TK-####`), `title`, `description`, `status`
+  (`OPEN` | `IN_PROGRESS` | `RESOLVED`), `priority` (`LOW` | `MEDIUM` | `HIGH`),
+  `customerId` (owner), `agentId` (assignee, nullable).
 - **Comment** — append-only message on a ticket (`body`, `authorId`), forming a
   chronological thread.
-- **Tag** — category (e.g. Billing, Network, Account), many-to-many with Ticket.
+- **Tag** — category (Billing, Network, Account, Hardware, API) with a `color`;
+  many-to-many with Ticket.
 
 Indexes cover the agent dashboard's hot paths: ticket `status`, `priority`,
 `customerId`, `agentId`, `createdAt`, and `(ticketId, createdAt)` on comments.
@@ -99,6 +107,20 @@ consistent envelope: `{ "error": string, "details"?: unknown }`.
 
 ---
 
+## Screens
+
+Built to a high-fidelity design (exact tokens for color, type, spacing). Role
+comes from the session, not a toggle.
+
+- **Sign in** — split brand panel + credentials form, with one-click demo login.
+- **Agent:** Dashboard (metrics, priority bars, unassigned queue, ticket table),
+  Tickets (searchable/filterable table), Ticket detail (live thread + composer,
+  editable status/priority/assignee, mark-as-resolved), Customers, Tags, Settings.
+- **Customer:** My tickets (summary cards + list), New ticket (validated form),
+  Ticket detail (read-only controls + reply), Help center (FAQ accordion).
+
+---
+
 ## Local setup
 
 ### Prerequisites
@@ -135,15 +157,16 @@ npm run dev          # http://localhost:3000
 
 ### Demo credentials
 
-All seeded accounts share the password **`Password123!`**.
+All seeded accounts share the password **`Password123!`**. On the sign-in
+screen, **Enter as Agent** / **Enter as Customer** log in with the two accounts
+below in one click.
 
 | Role | Email |
 | --- | --- |
-| Agent | `agent@xendesk.test` |
-| Agent | `bob.agent@xendesk.test` |
-| Customer | `customer@xendesk.test` |
-| Customer | `dave@xendesk.test` |
-| Customer | `erin@xendesk.test` |
+| Agent | `jordan.vega@xenfi.com` |
+| Agent | `priya.nair@xenfi.com` · `daniel.okoro@xenfi.com` · `marcus.lee@xenfi.com` |
+| Customer | `marcus.reyes@northgate.media` |
+| Customer | `elena.fischer@brightwave.io` · `aisha.bello@lumenhealth.com` · `liang.wei@skyforge.dev` · others |
 
 ---
 
@@ -155,7 +178,9 @@ npm run typecheck # tsc --noEmit
 npm run lint      # ESLint
 ```
 
-Integration tests run against a separate `xendesk_test` database. Create it once:
+Integration tests use a separate database, derived from `.env`'s `DATABASE_URL`
+with the database name suffixed `_test` (override with `TEST_DATABASE_URL`).
+Create and migrate it once:
 
 ```bash
 docker exec xendesk-postgres psql -U xendesk -d xendesk -c "CREATE DATABASE xendesk_test;"
@@ -189,16 +214,19 @@ No secrets are committed; `.env` is gitignored and only `.env.example` ships.
 
 ## Tradeoffs & known limitations
 
-- **Frontend pending.** The API is complete and verified; the UI is being built
-  against dedicated designs and is not in this README's scope yet.
 - **Ticket editing.** Customers cannot edit a ticket's title/description after
   creation (only comment). Status/priority/assignment are agent-only state
   transitions. This keeps the support log trustworthy; a future revision could
   allow owners to edit while `OPEN`.
 - **Comments are append-only** (no edit/delete) — appropriate for an auditable
   support thread.
-- **Real-time** is intended via polling / client revalidation (reliable on
-  Vercel serverless) rather than WebSockets; it lands with the frontend.
+- **Real-time** is polling-based (SWR revalidation of the ticket thread and
+  dashboard) rather than WebSockets — reliable on Vercel serverless and a
+  deliberate trade of latency for simplicity.
+- **Tag management UI.** The API supports creating/deleting tags; the UI
+  currently surfaces the tag taxonomy read-only (the design has no create form).
+- **Settings toggles** are local UI state (not yet persisted), matching the
+  design's scope.
 - **`pg` deprecation warning.** Prisma 7's query interpreter pipelines the
   statements of a nested write (e.g. creating a ticket with connected tags and
   comments) onto one connection, which the `pg` driver flags with a
