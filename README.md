@@ -62,8 +62,22 @@ mocking Auth.js, and they are the single source of truth the routes rely on.
 - **Tag** — category (Billing, Network, Account, Hardware, API) with a `color`;
   many-to-many with Ticket.
 
-Indexes cover the agent dashboard's hot paths: ticket `status`, `priority`,
-`customerId`, `agentId`, `createdAt`, and `(ticketId, createdAt)` on comments.
+**Indexing / query optimization.** Indexes are chosen from the actual query
+shapes, not sprinkled on:
+
+- **Composite `(filter, createdAt)`** on `Ticket` for `customerId`, `status`,
+  and `agentId`. Every list/dashboard query filters then orders by `createdAt`,
+  so one index serves both the filter and the sort; the leading column also
+  covers filter-only counts (the bare single-column indexes are therefore
+  redundant and dropped). `priority` and `createdAt` keep single-column indexes
+  for the priority breakdown and the unfiltered list.
+- **GIN trigram indexes** (`pg_trgm`) on `Ticket.title` and `description`, so the
+  case-insensitive `contains` search is index-accelerated (`ILIKE '%term%'`
+  can't use a btree). Verified via `EXPLAIN`: the planner does a Bitmap Index
+  Scan on these rather than a sequential scan.
+- **`Comment(ticketId, createdAt)`** serves the chronological thread fetch.
+- Trade-off: each index adds write cost; on a write-light support tool the read
+  wins dominate, and the set is kept minimal rather than exhaustive.
 
 ### Roles & permissions
 

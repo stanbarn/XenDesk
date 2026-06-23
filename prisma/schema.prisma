@@ -2,12 +2,15 @@
 // Docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  // pg_trgm powers the GIN indexes used for ticket text search.
+  extensions = [pg_trgm]
 }
 
 // --- Enums -------------------------------------------------------------------
@@ -72,14 +75,18 @@ model Ticket {
   comments Comment[]
   tags     Tag[]     @relation("TicketTags")
 
-  // Indexes chosen for the agent dashboard's hot paths: filtering by
-  // status/priority, listing a customer's own tickets, and the
-  // "unassigned tickets" metric.
-  @@index([status])
-  @@index([priority])
-  @@index([customerId])
-  @@index([agentId])
-  @@index([createdAt])
+  // Composite (filter, createdAt) indexes serve the hot list/dashboard
+  // queries — each filters then orders by createdAt — from a single index,
+  // and their leading column also covers filter-only counts (so the bare
+  // single-column indexes would be redundant). GIN trigram indexes make the
+  // case-insensitive `contains` search index-accelerated instead of a scan.
+  @@index([customerId, createdAt]) // a customer's own tickets, newest first
+  @@index([status, createdAt]) // status chips + status counts
+  @@index([agentId, createdAt]) // assignment filter + unassigned queue
+  @@index([priority]) // priority filter + dashboard priority breakdown
+  @@index([createdAt]) // unfiltered "all tickets", newest first
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([description(ops: raw("gin_trgm_ops"))], type: Gin)
 }
 
 // Append-only message thread. Comments form a chronological feed and are
