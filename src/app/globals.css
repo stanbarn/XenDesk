@@ -1,26 +1,67 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* XenDesk design tokens (see design handoff). */
+@theme {
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), system-ui, sans-serif;
+
+  --color-canvas: #f4f6fa;
+  --color-surface: #ffffff;
+  --color-line: #e7ebf1;
+  --color-line-soft: #f1f4f8;
+  --color-divider: #eef1f5;
+  --color-input: #d7dee8;
+  --color-input-line: #e2e8f0;
+
+  --color-ink: #101828;
+  --color-secondary: #344054;
+  --color-muted: #667085;
+  --color-faint: #98a2b3;
+
+  --color-brand: #0e9f6e;
+  --color-brand-dark: #0b8e63;
+  --color-brand-tint: #e7f7f0;
+  --color-row-hover: #f8fafb;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(14, 159, 110, 0.18);
+}
+
+*::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #d5dce6;
+  border-radius: 8px;
+  border: 3px solid var(--color-canvas);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9aa6b8;
+}
+
+/* Reusable brand gradients. */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, #15c089, #0e9f6e);
+}
+.bg-brand-panel {
+  background: linear-gradient(150deg, #0f9f6e 0%, #0b8e63 52%, #0a7a57 100%);
 }

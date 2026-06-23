@@ -28,7 +28,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!ok) return null;
 
         // Returned object is persisted into the JWT (see callbacks below).
-        return { id: user.id, email: user.email, name: user.name, role: user.role };
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          company: user.company,
+        };
       },
     }),
   ],
@@ -40,13 +46,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // our authorize() return (id is optional in Auth.js's base type).
         token.id = user.id!;
         token.role = user.role;
+        token.company = user.company;
       }
       return token;
     },
-    // Expose id + role on the session consumed by the app.
+    // Expose id + role + company on the session consumed by the app.
     session({ session, token }) {
       session.user.id = token.id;
       session.user.role = token.role;
+      session.user.company = token.company;
       return session;
     },
   },
