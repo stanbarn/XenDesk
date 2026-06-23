@@ -1,5 +1,5 @@
 import { json, parseBody, route } from "@/lib/api/http";
-import { requireActor } from "@/lib/auth/rbac";
+import { requireActor } from "@/lib/auth/session";
 import { updateTicketSchema } from "@/lib/validation/ticket";
 import { deleteTicket, getTicketById, updateTicket } from "@/lib/services/tickets";
 

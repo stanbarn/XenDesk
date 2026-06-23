@@ -1,5 +1,5 @@
 import { json, route } from "@/lib/api/http";
-import { requireActor } from "@/lib/auth/rbac";
+import { requireActor } from "@/lib/auth/session";
 import { deleteTag } from "@/lib/services/tags";
 
 type Context = { params: Promise<{ id: string }> };

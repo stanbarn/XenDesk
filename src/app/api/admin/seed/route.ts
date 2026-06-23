@@ -1,5 +1,5 @@
 import { json, route } from "@/lib/api/http";
-import { requireAgent } from "@/lib/auth/rbac";
+import { requireAgent } from "@/lib/auth/session";
 import { HttpError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import { seedDatabase } from "@/lib/seed";

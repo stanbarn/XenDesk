@@ -1,4 +1,3 @@
-import { auth } from "@/auth";
 import { Role } from "@/generated/prisma/enums";
 import { HttpError } from "@/lib/errors";
 
@@ -6,6 +5,9 @@ import { HttpError } from "@/lib/errors";
  * The authenticated identity passed into the service layer. Keeping this a
  * plain object (not the full session) lets services enforce authorization
  * without depending on Auth.js — which makes them unit-testable in isolation.
+ *
+ * This module is intentionally free of any Auth.js / Next.js imports. The
+ * session-bound resolvers (requireActor/requireAgent) live in ./session.
  */
 export type Actor = {
   id: string;
@@ -17,31 +19,6 @@ export class AuthError extends HttpError {
   constructor(status: 401 | 403, message: string) {
     super(status, message);
   }
-}
-
-// --- Identity resolution (HTTP edge) ----------------------------------------
-
-/** Returns the current actor, or null if not signed in. */
-export async function getCurrentActor(): Promise<Actor | null> {
-  const session = await auth();
-  if (!session?.user) return null;
-  return { id: session.user.id, role: session.user.role };
-}
-
-/** Returns the current actor or throws 401. */
-export async function requireActor(): Promise<Actor> {
-  const actor = await getCurrentActor();
-  if (!actor) throw new AuthError(401, "Authentication required.");
-  return actor;
-}
-
-/** Returns the current actor if they are an agent, otherwise throws 401/403. */
-export async function requireAgent(): Promise<Actor> {
-  const actor = await requireActor();
-  if (actor.role !== Role.AGENT) {
-    throw new AuthError(403, "Agent role required.");
-  }
-  return actor;
 }
 
 // --- Pure authorization predicates (service layer) --------------------------

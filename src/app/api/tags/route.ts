@@ -1,5 +1,5 @@
 import { json, parseBody, route } from "@/lib/api/http";
-import { requireActor } from "@/lib/auth/rbac";
+import { requireActor } from "@/lib/auth/session";
 import { createTagSchema } from "@/lib/validation/tag";
 import { createTag, listTags } from "@/lib/services/tags";
 

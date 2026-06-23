@@ -1,5 +1,5 @@
 import { json, route } from "@/lib/api/http";
-import { requireActor } from "@/lib/auth/rbac";
+import { requireActor } from "@/lib/auth/session";
 import { getDashboardStats } from "@/lib/services/tickets";
 
 // Agent dashboard metrics (enforced in the service).

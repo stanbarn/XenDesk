@@ -1,5 +1,5 @@
 import { json, parseBody, route } from "@/lib/api/http";
-import { requireActor } from "@/lib/auth/rbac";
+import { requireActor } from "@/lib/auth/session";
 import { createCommentSchema } from "@/lib/validation/comment";
 import { addComment, listComments } from "@/lib/services/comments";
 

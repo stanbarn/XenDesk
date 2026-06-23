@@ -1,5 +1,5 @@
 import { json, parseBody, parseQuery, route } from "@/lib/api/http";
-import { requireActor } from "@/lib/auth/rbac";
+import { requireActor } from "@/lib/auth/session";
 import { createTicketSchema, listTicketsQuerySchema } from "@/lib/validation/ticket";
 import { createTicket, listTickets } from "@/lib/services/tickets";
 

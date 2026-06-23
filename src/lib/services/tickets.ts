@@ -101,7 +101,8 @@ export async function listTickets(actor: Actor, query: ListTicketsQuery): Promis
   }
 
   const skip = (query.page - 1) * query.pageSize;
-  const [items, total] = await prisma.$transaction([
+  // Read-only: run page + count concurrently on the pool (no transaction needed).
+  const [items, total] = await Promise.all([
     prisma.ticket.findMany({
       where,
       select: ticketListSelect,
@@ -206,7 +207,7 @@ export async function getDashboardStats(actor: Actor): Promise<DashboardStats> {
   const active = { status: { not: TicketStatus.RESOLVED } };
 
   const [total, open, inProgress, resolved, unassigned, low, medium, high] =
-    await prisma.$transaction([
+    await Promise.all([
       prisma.ticket.count(),
       prisma.ticket.count({ where: { status: TicketStatus.OPEN } }),
       prisma.ticket.count({ where: { status: TicketStatus.IN_PROGRESS } }),
