@@ -248,8 +248,9 @@ No secrets are committed; `.env` is gitignored and only `.env.example` ships.
   deliberate trade of latency for simplicity.
 - **Tag management UI.** The API supports creating/deleting tags; the UI
   currently surfaces the tag taxonomy read-only (the design has no create form).
-- **Settings toggles** are local UI state (not yet persisted), matching the
-  design's scope.
+- **Settings toggles** and the sign-in **"Remember me"** are interactive but
+  presentational — settings aren't persisted yet, and the JWT session uses a
+  fixed lifetime regardless of the checkbox (matching the design's scope).
 - **`pg` deprecation warning.** Prisma 7's query interpreter pipelines the
   statements of a nested write (e.g. creating a ticket with connected tags and
   comments) onto one connection, which the `pg` driver flags with a

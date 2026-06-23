@@ -27,6 +27,7 @@ export function SignInForm() {
   const [password, setPassword] = useState(DEMO_PASSWORD);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [remember, setRemember] = useState(true);
 
   async function authenticate(withEmail: string, withPassword: string, dest: string) {
     setPending(true);
@@ -118,12 +119,22 @@ export function SignInForm() {
           />
 
           <div className="mb-6 flex items-center justify-between text-[13px]">
-            <span className="flex cursor-pointer items-center gap-2 text-muted">
-              <span className="inline-flex h-4 w-4 items-center justify-center rounded-[5px] border border-brand bg-brand">
-                <Check size={10} className="text-white" strokeWidth={3.5} />
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={remember}
+              onClick={() => setRemember((v) => !v)}
+              className="flex cursor-pointer items-center gap-2 text-muted"
+            >
+              <span
+                className={`inline-flex h-4 w-4 items-center justify-center rounded-[5px] border ${
+                  remember ? "border-brand bg-brand" : "border-input bg-surface"
+                }`}
+              >
+                {remember && <Check size={10} className="text-white" strokeWidth={3.5} />}
               </span>
               Remember me
-            </span>
+            </button>
             <span className="cursor-pointer font-semibold text-brand">Forgot password?</span>
           </div>
 
