@@ -1,0 +1,103 @@
+// XenDesk — support ticketing data model.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Enums -------------------------------------------------------------------
+
+enum Role {
+  CUSTOMER
+  AGENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// --- Models ------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // A customer owns the tickets they raise.
+  ticketsAsCustomer Ticket[] @relation("CustomerTickets")
+  // An agent is assigned to tickets they handle.
+  ticketsAsAgent    Ticket[]  @relation("AgentTickets")
+  comments          Comment[]
+
+  @@index([role])
+}
+
+model Ticket {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  status      TicketStatus @default(OPEN)
+  priority    Priority     @default(MEDIUM)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  customerId String
+  customer   User   @relation("CustomerTickets", fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Unassigned until an agent picks it up.
+  agentId String?
+  agent   User?   @relation("AgentTickets", fields: [agentId], references: [id], onDelete: SetNull)
+
+  comments Comment[]
+  tags     Tag[]     @relation("TicketTags")
+
+  // Indexes chosen for the agent dashboard's hot paths: filtering by
+  // status/priority, listing a customer's own tickets, and the
+  // "unassigned tickets" metric.
+  @@index([status])
+  @@index([priority])
+  @@index([customerId])
+  @@index([agentId])
+  @@index([createdAt])
+}
+
+// Append-only message thread. Comments form a chronological feed and are
+// never edited or deleted through the API.
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  tickets Ticket[] @relation("TicketTags")
+}
