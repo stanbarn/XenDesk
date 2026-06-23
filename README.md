@@ -185,10 +185,10 @@ below in one click.
 
 | Role | Email |
 | --- | --- |
-| Agent | `jordan.vega@xenfi.com` |
-| Agent | `priya.nair@xenfi.com` · `daniel.okoro@xenfi.com` · `marcus.lee@xenfi.com` |
-| Customer | `marcus.reyes@northgate.media` |
-| Customer | `elena.fischer@brightwave.io` · `aisha.bello@lumenhealth.com` · `liang.wei@skyforge.dev` · others |
+| Agent | `joel.mukasa@xenfi.com` |
+| Agent | `aisha.nankya@xenfi.com` · `david.okello@xenfi.com` · `patricia.atuhaire@xenfi.com` |
+| Customer | `brenda.namuli@nileagro.co.ug` |
+| Customer | `samuel.wasswa@pearlmicro.co.ug` · `grace.auma@victoriafoods.co.ug` · `ibrahim.ssali@equatorlogistics.co.ug` · others |
 
 ---
 
