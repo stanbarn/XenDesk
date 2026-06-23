@@ -16,11 +16,12 @@ import {
 import { assertTagsExist } from "@/lib/services/tags";
 
 // Public-facing user fields (never expose passwordHash).
-const userPreview = { id: true, name: true, email: true } as const;
+const userPreview = { id: true, name: true, email: true, company: true } as const;
 
 // Shape returned by list endpoints — light, with a comment count.
 const ticketListSelect = {
   id: true,
+  number: true,
   title: true,
   status: true,
   priority: true,
@@ -28,7 +29,7 @@ const ticketListSelect = {
   updatedAt: true,
   customer: { select: userPreview },
   agent: { select: userPreview },
-  tags: { select: { id: true, name: true } },
+  tags: { select: { id: true, name: true, color: true } },
   _count: { select: { comments: true } },
 } as const;
 

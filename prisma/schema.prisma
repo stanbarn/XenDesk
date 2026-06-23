@@ -37,6 +37,8 @@ model User {
   name         String
   passwordHash String
   role         Role     @default(CUSTOMER)
+  // Customers belong to a company (shown across the agent UI); null for agents.
+  company      String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -51,6 +53,8 @@ model User {
 
 model Ticket {
   id          String       @id @default(cuid())
+  // Human-friendly sequential code shown in the UI as "TK-{number}".
+  number      Int          @unique @default(autoincrement())
   title       String
   description String
   status      TicketStatus @default(OPEN)
@@ -97,6 +101,8 @@ model Comment {
 model Tag {
   id        String   @id @default(cuid())
   name      String   @unique
+  // Hex color used to render the tag chip across the UI.
+  color     String   @default("#667085")
   createdAt DateTime @default(now())
 
   tickets Ticket[] @relation("TicketTags")

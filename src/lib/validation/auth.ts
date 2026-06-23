@@ -12,6 +12,7 @@ export const registerSchema = z.object({
     .string()
     .min(8, "Password must be at least 8 characters.")
     .max(72, "Password must be at most 72 characters."), // bcrypt truncates beyond 72 bytes
+  company: z.string().trim().max(120).optional(),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

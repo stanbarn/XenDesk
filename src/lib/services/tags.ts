@@ -6,8 +6,11 @@ import { type CreateTagInput } from "@/lib/validation/tag";
 const tagSelect = {
   id: true,
   name: true,
+  color: true,
   _count: { select: { tickets: true } },
 } as const;
+
+const DEFAULT_TAG_COLOR = "#667085";
 
 /** Tags are visible to any authenticated user (used to categorise tickets). */
 export function listTags() {
@@ -25,7 +28,10 @@ export async function createTag(actor: Actor, input: CreateTagInput) {
   });
   if (existing) throw new ConflictError(`Tag "${name}" already exists.`);
 
-  return prisma.tag.create({ data: { name }, select: tagSelect });
+  return prisma.tag.create({
+    data: { name, color: input.color ?? DEFAULT_TAG_COLOR },
+    select: tagSelect,
+  });
 }
 
 export async function deleteTag(actor: Actor, tagId: string) {
