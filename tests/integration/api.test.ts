@@ -16,7 +16,7 @@ import { POST as addComment } from "@/app/api/tickets/[id]/comments/route";
 import { GET as dashboard } from "@/app/api/dashboard/stats/route";
 import { POST as register } from "@/app/api/auth/register/route";
 import { GET as listCustomersRoute } from "@/app/api/customers/route";
-import { GET as listAgentsRoute } from "@/app/api/agents/route";
+import { GET as listAgentsRoute, POST as createAgentRoute } from "@/app/api/agents/route";
 import { GET as listTagsRoute, POST as createTagRoute } from "@/app/api/tags/route";
 import { prisma, resetDatabase } from "../helpers/db";
 
@@ -135,6 +135,31 @@ describe("public + agent collection routes", () => {
     mockActor.mockResolvedValue({ id: agentId, role: Role.AGENT });
     expect((await listCustomersRoute(new Request("http://localhost/api/customers"))).status).toBe(200);
     expect((await listAgentsRoute(new Request("http://localhost/api/agents"))).status).toBe(200);
+  });
+
+  it("onboards an agent for an agent (201) and forbids a customer (403)", async () => {
+    mockActor.mockResolvedValueOnce({ id: agentId, role: Role.AGENT });
+    const ok = await createAgentRoute(
+      new Request("http://localhost/api/agents", {
+        method: "POST",
+        body: JSON.stringify({ name: "New Agent", email: "new.agent@test.local" }),
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    expect(ok.status).toBe(201);
+    const body = await ok.json();
+    expect(body.agent.role).toBe(Role.AGENT);
+    expect(typeof body.tempPassword).toBe("string");
+
+    mockActor.mockResolvedValueOnce({ id: customerId, role: Role.CUSTOMER });
+    const forbidden = await createAgentRoute(
+      new Request("http://localhost/api/agents", {
+        method: "POST",
+        body: JSON.stringify({ name: "Nope", email: "nope@test.local" }),
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    expect(forbidden.status).toBe(403);
   });
 
   it("reads tags for any actor and creates one as an agent (201)", async () => {

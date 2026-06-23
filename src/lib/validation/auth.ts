@@ -15,5 +15,13 @@ export const registerSchema = z.object({
   company: z.string().trim().max(120).optional(),
 });
 
+// Onboarding a teammate: the creator supplies name + email; the password is
+// system-generated and returned once.
+export const onboardAgentSchema = z.object({
+  name: z.string().trim().min(1, "Name is required.").max(120),
+  email: z.string().trim().toLowerCase().email("A valid email is required."),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
+export type OnboardAgentInput = z.infer<typeof onboardAgentSchema>;

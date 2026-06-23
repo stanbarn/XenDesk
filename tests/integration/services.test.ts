@@ -4,7 +4,7 @@ import { Priority, Role, TicketStatus } from "@/generated/prisma/enums";
 import { type Actor, AuthError } from "@/lib/auth/rbac";
 import { verifyPassword } from "@/lib/auth/password";
 import { BadRequestError, ConflictError, NotFoundError } from "@/lib/errors";
-import { listCustomers, listAgents, registerCustomer } from "@/lib/services/users";
+import { createAgent, listCustomers, listAgents, registerCustomer } from "@/lib/services/users";
 import { assertTagsExist, createTag, deleteTag, listTags } from "@/lib/services/tags";
 import { prisma, resetDatabase } from "../helpers/db";
 
@@ -58,6 +58,29 @@ describe("listAgents / listCustomers", () => {
     const customers = await listCustomers(agent);
     expect(customers).toHaveLength(1);
     expect(customers[0]).toMatchObject({ company: "Globex", total: 2, open: 1 });
+  });
+});
+
+describe("createAgent (onboarding)", () => {
+  it("is agent-only", async () => {
+    await expect(createAgent(customer, { name: "X", email: "x@xenfi.com" })).rejects.toBeInstanceOf(AuthError);
+  });
+
+  it("creates an AGENT with a working one-time password", async () => {
+    const { agent: created, tempPassword } = await createAgent(agent, {
+      name: "New Agent",
+      email: "new.agent@xenfi.com",
+    });
+    expect(created.role).toBe(Role.AGENT);
+    expect(tempPassword.length).toBeGreaterThanOrEqual(8);
+
+    const stored = await prisma.user.findUniqueOrThrow({ where: { id: created.id } });
+    expect(await verifyPassword(tempPassword, stored.passwordHash)).toBe(true);
+  });
+
+  it("rejects a duplicate email", async () => {
+    await createAgent(agent, { name: "A", email: "dupe@xenfi.com" });
+    await expect(createAgent(agent, { name: "B", email: "dupe@xenfi.com" })).rejects.toBeInstanceOf(ConflictError);
   });
 });
 

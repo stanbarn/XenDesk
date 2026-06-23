@@ -3,13 +3,16 @@ import { config as loadEnv } from "dotenv";
 import { defineConfig } from "vitest/config";
 
 loadEnv(); // make .env values (DATABASE_URL) visible to this config
+loadEnv({ path: ".env.test", override: true }); // optional local TEST_DATABASE_URL
 
 /**
  * Integration tests run against a dedicated test database, resolved in order:
- *   1. TEST_DATABASE_URL (CI sets this explicitly), else
+ *   1. TEST_DATABASE_URL (CI sets it; or a gitignored local .env.test), else
  *   2. the dev DATABASE_URL with its database name suffixed "_test", else
  *   3. a local default.
- * Deriving from .env keeps real credentials out of this committed file.
+ * Deriving from .env keeps real credentials out of this committed file. Point
+ * TEST_DATABASE_URL at a LOCAL database when .env's DATABASE_URL is remote
+ * (e.g. Neon) — you don't want tests wiping a managed database.
  */
 function resolveTestDatabaseUrl(): string {
   if (process.env.TEST_DATABASE_URL) return process.env.TEST_DATABASE_URL;

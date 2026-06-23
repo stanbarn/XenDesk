@@ -93,6 +93,13 @@ shapes, not sprinkled on:
 | Manage tags | ❌ | ✅ (create/delete) |
 | Delete ticket | ❌ | ✅ |
 | Dashboard metrics | ❌ | ✅ |
+| Onboard a new agent | ❌ | ✅ (Settings → Team) |
+
+Agents are not self-service: a customer self-registers, but agents are created
+by an existing agent (Settings → Team), which issues a one-time temporary
+password to share. The very first agent comes from the seed (no agents → no one
+to onboard). A production system would add an admin/owner tier, an email invite
+flow, and a change-password step — see Tradeoffs.
 
 ---
 
@@ -116,6 +123,7 @@ consistent envelope: `{ "error": string, "details"?: unknown }`.
 | `POST` | `/tags` | agent | Create a tag |
 | `DELETE` | `/tags/:id` | agent | Delete a tag |
 | `GET` | `/agents` | agent | List agents (assignment picker) |
+| `POST` | `/agents` | agent | Onboard a new agent; returns a one-time temp password |
 | `GET` | `/dashboard/stats` | agent | Open/in-progress/resolved/unassigned counts + priority breakdown |
 | `POST` | `/admin/seed` | agent | Reseed demo data (gated by `ENABLE_SEED_ENDPOINT`) |
 
@@ -251,6 +259,9 @@ No secrets are committed; `.env` is gitignored and only `.env.example` ships.
 - **Settings toggles** and the sign-in **"Remember me"** are interactive but
   presentational — settings aren't persisted yet, and the JWT session uses a
   fixed lifetime regardless of the checkbox (matching the design's scope).
+- **Agent onboarding** issues a one-time temp password (no email infra). Natural
+  follow-ups: email invite links, a change-password / reset flow, and an
+  admin/owner tier so not every agent can mint agents.
 - **`pg` deprecation warning.** Prisma 7's query interpreter pipelines the
   statements of a nested write (e.g. creating a ticket with connected tags and
   comments) onto one connection, which the `pg` driver flags with a

@@ -1,9 +1,11 @@
+import { randomBytes } from "node:crypto";
+
 import { Role } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { type Actor, assertAgent } from "@/lib/auth/rbac";
 import { ConflictError } from "@/lib/errors";
 import { hashPassword } from "@/lib/auth/password";
-import { type RegisterInput } from "@/lib/validation/auth";
+import { type OnboardAgentInput, type RegisterInput } from "@/lib/validation/auth";
 
 // Never return passwordHash to callers.
 const safeUserSelect = {
@@ -33,6 +35,40 @@ export async function registerCustomer(input: RegisterInput) {
     },
     select: safeUserSelect,
   });
+}
+
+// A URL-safe, unambiguous temporary password (~16 chars) shown once at
+// onboarding. The new agent should change it (change-password flow is a
+// documented follow-up).
+function generateTempPassword(): string {
+  return randomBytes(12).toString("base64url");
+}
+
+/**
+ * Agent-only: onboard a new agent. The password is generated server-side and
+ * returned exactly once so the onboarding agent can share it securely.
+ */
+export async function createAgent(actor: Actor, input: OnboardAgentInput) {
+  assertAgent(actor);
+
+  const existing = await prisma.user.findUnique({
+    where: { email: input.email },
+    select: { id: true },
+  });
+  if (existing) throw new ConflictError("A user with this email already exists.");
+
+  const tempPassword = generateTempPassword();
+  const agent = await prisma.user.create({
+    data: {
+      name: input.name,
+      email: input.email,
+      passwordHash: await hashPassword(tempPassword),
+      role: Role.AGENT,
+    },
+    select: safeUserSelect,
+  });
+
+  return { agent, tempPassword };
 }
 
 /** Agent-only: list of agents, used to populate the assignment picker. */
