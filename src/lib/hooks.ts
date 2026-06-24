@@ -17,8 +17,12 @@ import type {
 const DASHBOARD_REFRESH = 15_000;
 const THREAD_REFRESH = 8_000;
 
-export function useDashboardStats() {
-  return useSWR<DashboardStats>("/dashboard/stats", { refreshInterval: DASHBOARD_REFRESH });
+// `enabled` lets non-agent surfaces (e.g. the customer sidebar) skip this
+// agent-only endpoint instead of firing a request that 403s every load.
+export function useDashboardStats(enabled = true) {
+  return useSWR<DashboardStats>(enabled ? "/dashboard/stats" : null, {
+    refreshInterval: DASHBOARD_REFRESH,
+  });
 }
 
 export function useTickets(queryString = "") {

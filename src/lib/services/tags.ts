@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { type Actor, assertAgent } from "@/lib/auth/rbac";
-import { BadRequestError, ConflictError, NotFoundError } from "@/lib/errors";
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+  isUniqueConstraintError,
+} from "@/lib/errors";
 import { type CreateTagInput } from "@/lib/validation/tag";
 
 const tagSelect = {
@@ -28,10 +33,19 @@ export async function createTag(actor: Actor, input: CreateTagInput) {
   });
   if (existing) throw new ConflictError(`Tag "${name}" already exists.`);
 
-  return prisma.tag.create({
-    data: { name, color: input.color ?? DEFAULT_TAG_COLOR },
-    select: tagSelect,
-  });
+  try {
+    return await prisma.tag.create({
+      data: { name, color: input.color ?? DEFAULT_TAG_COLOR },
+      select: tagSelect,
+    });
+  } catch (error) {
+    // Concurrent create with the same name loses the application-level check
+    // above and hits the unique constraint — surface it as a 409, not a 500.
+    if (isUniqueConstraintError(error)) {
+      throw new ConflictError(`Tag "${name}" already exists.`);
+    }
+    throw error;
+  }
 }
 
 export async function deleteTag(actor: Actor, tagId: string) {

@@ -15,7 +15,8 @@ type ShellUser = { name: string; role: Role; company: string | null };
 export function Sidebar({ user }: { user: ShellUser }) {
   const pathname = usePathname();
   const isAgent = user.role === "AGENT";
-  const { data: stats } = useDashboardStats();
+  // Only agents have the dashboard endpoint (and the Tickets badge).
+  const { data: stats } = useDashboardStats(isAgent);
 
   const navItems = navForRole(user.role);
   const roleLabel = isAgent

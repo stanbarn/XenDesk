@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Field";
 import { PriorityPill, StatusPill } from "@/components/ui/Pills";
 import { TagChip } from "@/components/ui/TagChip";
-import { api } from "@/lib/api/client";
+import { api, ApiError } from "@/lib/api/client";
 import { useAgents, useTags, useTicket } from "@/lib/hooks";
 import { formatDate, relativeTime } from "@/lib/format";
 import { PRIORITY_ORDER, PRIORITY_LABEL, STATUS_ORDER, STATUS_LABEL, ticketCode } from "@/lib/ui/tokens";
@@ -34,6 +34,8 @@ export function TicketDetailView({
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [replyError, setReplyError] = useState<string | null>(null);
 
   if (error) {
     return (
@@ -48,9 +50,12 @@ export function TicketDetailView({
 
   async function patch(body: Record<string, unknown>) {
     setSaving(true);
+    setSaveError(null);
     try {
       await api.patch(`/tickets/${id}`, body);
       await mutate();
+    } catch (err) {
+      setSaveError(err instanceof ApiError ? err.message : "Could not update the ticket.");
     } finally {
       setSaving(false);
     }
@@ -67,10 +72,13 @@ export function TicketDetailView({
     const body = reply.trim();
     if (!body) return;
     setSending(true);
+    setReplyError(null);
     try {
       await api.post(`/tickets/${id}/comments`, { body });
       setReply("");
       await mutate();
+    } catch (err) {
+      setReplyError(err instanceof ApiError ? err.message : "Could not send your reply.");
     } finally {
       setSending(false);
     }
@@ -172,12 +180,18 @@ export function TicketDetailView({
                 {sending ? "Sending…" : "Send reply"}
               </Button>
             </div>
+            {replyError && (
+              <p className="mt-2.5 text-[12.5px] font-semibold text-[#C2341D]">{replyError}</p>
+            )}
           </div>
         </div>
 
         {/* Details panel */}
         <div className="rounded-[14px] border border-line bg-surface p-[18px] shadow-[0_1px_2px_rgba(16,24,40,.04)]">
           <div className="mb-4 text-sm font-bold">Details</div>
+          {saveError && (
+            <p className="mb-3 text-[12.5px] font-semibold text-[#C2341D]">{saveError}</p>
+          )}
 
           <div className={SECTION}>STATUS</div>
           {isAgent ? (

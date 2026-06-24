@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useSWRConfig } from "swr";
@@ -8,7 +9,7 @@ import type { LucideIcon } from "lucide-react";
 
 import { Card } from "@/components/ui/Card";
 import { TicketTable } from "@/components/tickets/TicketTable";
-import { api } from "@/lib/api/client";
+import { api, ApiError } from "@/lib/api/client";
 import { useDashboardStats, useTickets } from "@/lib/hooks";
 import { PRIORITY_STYLE } from "@/lib/ui/tokens";
 import { ticketCode } from "@/lib/ui/tokens";
@@ -60,11 +61,21 @@ export function AgentDashboard({ firstName }: { firstName: string }) {
   const { data: session } = useSession();
   const myId = session?.user?.id;
   const { mutate } = useSWRConfig();
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
   async function claim(ticketId: string) {
     if (!myId) return;
-    await api.patch(`/tickets/${ticketId}`, { agentId: myId });
-    mutate((key) => typeof key === "string" && (key.startsWith("/tickets") || key.startsWith("/dashboard")));
+    setClaimingId(ticketId);
+    setClaimError(null);
+    try {
+      await api.patch(`/tickets/${ticketId}`, { agentId: myId });
+      await mutate((key) => typeof key === "string" && (key.startsWith("/tickets") || key.startsWith("/dashboard")));
+    } catch (err) {
+      setClaimError(err instanceof ApiError ? err.message : "Could not assign the ticket.");
+    } finally {
+      setClaimingId(null);
+    }
   }
 
   const bars = [
@@ -116,12 +127,21 @@ export function AgentDashboard({ firstName }: { firstName: string }) {
               {stats?.unassigned ?? 0} waiting
             </span>
           </div>
+          {claimError && (
+            <p className="mb-2 text-[12px] font-semibold text-[#C2341D]">{claimError}</p>
+          )}
           {unassigned?.items.map((t) => (
             <div
               key={t.id}
               role="button"
               tabIndex={0}
               onClick={() => router.push(`/tickets/${t.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  router.push(`/tickets/${t.id}`);
+                }
+              }}
               className="group flex w-full cursor-pointer items-center gap-2.5 border-t border-line-soft px-1 py-2.5 text-left hover:bg-row-hover"
             >
               <span
@@ -136,14 +156,15 @@ export function AgentDashboard({ firstName }: { firstName: string }) {
               </span>
               <button
                 type="button"
+                disabled={claimingId === t.id}
                 onClick={(e) => {
                   e.stopPropagation();
                   void claim(t.id);
                 }}
-                className="flex flex-shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11.5px] font-semibold text-brand opacity-0 transition hover:bg-brand-tint group-hover:opacity-100"
+                className="flex flex-shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11.5px] font-semibold text-brand opacity-0 transition hover:bg-brand-tint group-hover:opacity-100 disabled:opacity-60"
               >
                 <UserPlus size={13} />
-                Assign to me
+                {claimingId === t.id ? "Assigning…" : "Assign to me"}
               </button>
             </div>
           ))}

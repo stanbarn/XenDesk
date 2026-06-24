@@ -94,6 +94,9 @@ export type CustomerSummary = {
 export async function listCustomers(actor: Actor): Promise<CustomerSummary[]> {
   assertAgent(actor);
 
+  // Select only the status of each customer's tickets (not full rows) and
+  // tally totals/open counts. Adequate at this scale; a groupBy could replace
+  // it if the per-customer ticket volume grew large.
   const customers = await prisma.user.findMany({
     where: { role: Role.CUSTOMER, ticketsAsCustomer: { some: {} } },
     select: {

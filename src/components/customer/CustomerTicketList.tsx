@@ -58,7 +58,15 @@ export function CustomerTicketList() {
         {items.map((t) => (
           <div
             key={t.id}
+            role="button"
+            tabIndex={0}
             onClick={() => router.push(`/tickets/${t.id}`)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                router.push(`/tickets/${t.id}`);
+              }
+            }}
             className="flex cursor-pointer items-center gap-4 rounded-[13px] border border-line bg-surface p-[16px_18px] shadow-[0_1px_2px_rgba(16,24,40,.04)] transition hover:border-[#CFE9DD] hover:shadow-[0_4px_14px_rgba(16,24,40,.06)]"
           >
             <div className="min-w-0 flex-1">

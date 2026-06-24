@@ -9,7 +9,7 @@ import { Search, UserPlus } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { PriorityPill, StatusPill } from "@/components/ui/Pills";
 import { TagChip } from "@/components/ui/TagChip";
-import { api } from "@/lib/api/client";
+import { api, ApiError } from "@/lib/api/client";
 import { useDebounce, useTags, useTickets } from "@/lib/hooks";
 import { relativeTime } from "@/lib/format";
 import { ticketCode } from "@/lib/ui/tokens";
@@ -43,12 +43,22 @@ export function TicketTable({ title = "All tickets" }: { title?: string }) {
   const { data: session } = useSession();
   const myId = session?.user?.id;
   const { mutate } = useSWRConfig();
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
   async function claim(ticketId: string, e: React.MouseEvent) {
     e.stopPropagation(); // don't open the ticket
     if (!myId) return;
-    await api.patch(`/tickets/${ticketId}`, { agentId: myId });
-    mutate((key) => typeof key === "string" && (key.startsWith("/tickets") || key.startsWith("/dashboard")));
+    setClaimingId(ticketId);
+    setClaimError(null);
+    try {
+      await api.patch(`/tickets/${ticketId}`, { agentId: myId });
+      await mutate((key) => typeof key === "string" && (key.startsWith("/tickets") || key.startsWith("/dashboard")));
+    } catch (err) {
+      setClaimError(err instanceof ApiError ? err.message : "Could not assign the ticket.");
+    } finally {
+      setClaimingId(null);
+    }
   }
 
   return (
@@ -115,6 +125,10 @@ export function TicketTable({ title = "All tickets" }: { title?: string }) {
         </select>
       </div>
 
+      {claimError && (
+        <p className="px-[18px] pt-3 text-[12.5px] font-semibold text-[#C2341D]">{claimError}</p>
+      )}
+
       {/* Scrollable grid (keeps columns from collapsing on narrow widths) */}
       <div className="overflow-x-auto">
       <div className="min-w-[920px]">
@@ -136,7 +150,15 @@ export function TicketTable({ title = "All tickets" }: { title?: string }) {
       {items.map((t) => (
         <div
           key={t.id}
+          role="button"
+          tabIndex={0}
           onClick={() => router.push(`/tickets/${t.id}`)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              router.push(`/tickets/${t.id}`);
+            }
+          }}
           className="grid cursor-pointer items-center gap-3.5 border-b border-line-soft px-[18px] py-[11px] hover:bg-row-hover"
           style={{ gridTemplateColumns: GRID }}
         >
@@ -167,10 +189,11 @@ export function TicketTable({ title = "All tickets" }: { title?: string }) {
                 <span className="text-[12.5px] font-semibold text-[#B45309]">Unassigned</span>
                 <button
                   type="button"
+                  disabled={claimingId === t.id}
                   onClick={(e) => claim(t.id, e)}
                   title="Assign to me"
                   aria-label="Assign to me"
-                  className="text-brand hover:text-brand-dark"
+                  className="text-brand hover:text-brand-dark disabled:opacity-50"
                 >
                   <UserPlus size={14} />
                 </button>

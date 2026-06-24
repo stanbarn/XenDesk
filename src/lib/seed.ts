@@ -292,7 +292,7 @@ export async function seedDatabase(prisma: PrismaClient): Promise<SeedSummary> {
   // Keep the autoincrement sequence ahead of the explicit demo numbers so
   // tickets created through the app continue from the highest seeded code.
   await prisma.$queryRawUnsafe(
-    `SELECT setval(pg_get_serial_sequence('"Ticket"', 'number'), (SELECT MAX(number) FROM "Ticket"))`,
+    `SELECT setval(pg_get_serial_sequence('"Ticket"', 'number'), COALESCE((SELECT MAX(number) FROM "Ticket"), 1))`,
   );
 
   return {

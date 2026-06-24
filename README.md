@@ -200,7 +200,7 @@ below in one click.
 ## Tests & quality
 
 ```bash
-npm test           # Vitest (unit + integration) — 62 tests
+npm test           # Vitest (unit + integration) — 71 tests
 npm run test:coverage  # same, with a V8 coverage report
 npm run typecheck  # tsc --noEmit
 npm run lint       # ESLint
@@ -215,7 +215,7 @@ docker exec xendesk-postgres psql -U xendesk -d xendesk -c "CREATE DATABASE xend
 TEST_DATABASE_URL="postgresql://xendesk:xendesk_dev_pw@localhost:5433/xendesk_test?schema=public" npm run db:deploy
 ```
 
-**62 tests** cover the brief's high-risk areas:
+**71 tests** cover the brief's high-risk areas:
 
 - **Unit** — password hashing, RBAC predicates, every Zod schema, and the API
   error-mapping wrapper (`ZodError → 400`, `HttpError → status`, `→ 500`).
@@ -226,7 +226,7 @@ TEST_DATABASE_URL="postgresql://xendesk:xendesk_dev_pw@localhost:5433/xendesk_te
 
 `test:coverage` scopes the report to the API + service + validation + auth
 logic (the UI and Auth.js glue are verified by running the app). Latest run:
-**~83% lines, ~81% branches** (core ticket service ~90%).
+**~84% lines, ~78% branches** (core ticket service ~90%).
 
 **CI** (`.github/workflows/ci.yml`) provisions a Postgres service and runs
 lint → typecheck → migrate → test → build on every push and pull request.

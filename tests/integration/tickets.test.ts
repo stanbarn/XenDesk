@@ -72,9 +72,18 @@ describe("listTickets — ownership scoping", () => {
     expect(result.total).toBe(3);
   });
 
-  it("supports the agent 'unassigned' filter", async () => {
-    const result = await listTickets(agent, { ...LIST_DEFAULTS, assignment: "unassigned" });
-    expect(result.total).toBe(3);
+  it("supports the agent 'unassigned' and 'mine' filters", async () => {
+    // All three start unassigned; assign one to the agent so the filters differ.
+    const all = await listTickets(agent, LIST_DEFAULTS);
+    await updateTicket(agent, all.items[0].id, { agentId: agent.id });
+
+    const unassigned = await listTickets(agent, { ...LIST_DEFAULTS, assignment: "unassigned" });
+    expect(unassigned.total).toBe(2);
+    expect(unassigned.items.every((t) => t.agent === null)).toBe(true);
+
+    const mine = await listTickets(agent, { ...LIST_DEFAULTS, assignment: "mine" });
+    expect(mine.total).toBe(1);
+    expect(mine.items[0].agent?.id).toBe(agent.id);
   });
 });
 

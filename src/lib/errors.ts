@@ -36,3 +36,13 @@ export class ConflictError extends HttpError {
 export function isHttpError(error: unknown): error is HttpError {
   return error instanceof HttpError;
 }
+
+/** True for a Prisma unique-constraint violation (P2002). */
+export function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code: unknown }).code === "P2002"
+  );
+}

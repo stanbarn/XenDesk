@@ -31,19 +31,27 @@ export async function addComment(actor: Actor, ticketId: string, input: CreateCo
   const ticket = await loadTicketForAccess(ticketId);
   assertCanAccessTicket(actor, ticket);
 
-  const reopen = !isAgent(actor) && ticket.status === TicketStatus.RESOLVED;
+  const isCustomer = !isAgent(actor);
 
   return prisma.$transaction(async (tx) => {
     const comment = await tx.comment.create({
       data: { body: input.body, ticketId: ticket.id, authorId: actor.id },
       select: commentSelect,
     });
-    // Every reply counts as activity, so bump the ticket's last-updated time
-    // (and reopen it if a customer replied after resolution).
+    // Every reply counts as activity, so bump the ticket's last-updated time.
     await tx.ticket.update({
       where: { id: ticket.id },
-      data: { updatedAt: new Date(), ...(reopen ? { status: TicketStatus.OPEN } : {}) },
+      data: { updatedAt: new Date() },
     });
+    // A customer reply reopens the ticket — but only if it is *still* resolved.
+    // Guarding the status in the WHERE (rather than deciding from an earlier
+    // read) avoids un-resolving a ticket an agent resolved concurrently.
+    if (isCustomer) {
+      await tx.ticket.updateMany({
+        where: { id: ticket.id, status: TicketStatus.RESOLVED },
+        data: { status: TicketStatus.OPEN },
+      });
+    }
     return comment;
   });
 }
