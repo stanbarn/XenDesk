@@ -188,12 +188,18 @@ All seeded accounts share the password **`Password123!`**. On the sign-in
 screen, **Enter as Agent** / **Enter as Customer** log in with the two accounts
 below in one click.
 
-| Role | Email |
-| --- | --- |
-| Agent | `joel.mukasa@xenfi.com` |
-| Agent | `aisha.nankya@xenfi.com` · `david.okello@xenfi.com` · `patricia.atuhaire@xenfi.com` |
-| Customer | `brenda.namuli@nileagro.co.ug` |
-| Customer | `samuel.wasswa@pearlmicro.co.ug` · `ronald.kato@savannahtel.co.ug` · `grace.auma@victoriafoods.co.ug` · `ibrahim.ssali@equatorlogistics.co.ug` · `esther.akello@rwenzoriretail.co.ug` |
+| Role | Email | Quick login |
+| --- | --- | --- |
+| Agent | `joel.mukasa@xenfi.com` | "Enter as Agent" |
+| Agent | `aisha.nankya@xenfi.com` | |
+| Agent | `david.okello@xenfi.com` | |
+| Agent | `patricia.atuhaire@xenfi.com` | |
+| Customer | `brenda.namuli@nileagro.co.ug` | "Enter as Customer" |
+| Customer | `samuel.wasswa@pearlmicro.co.ug` | |
+| Customer | `ronald.kato@savannahtel.co.ug` | |
+| Customer | `grace.auma@victoriafoods.co.ug` | |
+| Customer | `ibrahim.ssali@equatorlogistics.co.ug` | |
+| Customer | `esther.akello@rwenzoriretail.co.ug` | |
 
 ---
 
