@@ -258,8 +258,9 @@ No secrets are committed; `.env` is gitignored and only `.env.example` ships.
 - **Real-time** is polling-based (SWR revalidation of the ticket thread and
   dashboard) rather than WebSockets — reliable on Vercel serverless and a
   deliberate trade of latency for simplicity.
-- **Tag management UI.** The API supports creating/deleting tags; the UI
-  currently surfaces the tag taxonomy read-only (the design has no create form).
+- **Tag management.** Agents can create tags (Tags page → New tag). Deleting a
+  tag and editing a ticket's tags after creation are supported by the API
+  (`DELETE /api/tags/:id`, `PATCH …{tagIds}`) but not yet surfaced in the UI.
 - **Settings toggles** and the sign-in **"Remember me"** are interactive but
   presentational — settings aren't persisted yet, and the JWT session uses a
   fixed lifetime regardless of the checkbox (matching the design's scope).
