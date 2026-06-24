@@ -169,7 +169,7 @@ npm install
 
 # 2. Configure environment
 cp .env.example .env
-#   - set DATABASE_URL (the Docker default above is already in .env.example)
+#   - DATABASE_URL is preset to the Docker quickstart above (change it for Neon)
 #   - set AUTH_SECRET:  npx auth secret
 
 # 3. Apply migrations
@@ -193,7 +193,7 @@ below in one click.
 | Agent | `joel.mukasa@xenfi.com` |
 | Agent | `aisha.nankya@xenfi.com` · `david.okello@xenfi.com` · `patricia.atuhaire@xenfi.com` |
 | Customer | `brenda.namuli@nileagro.co.ug` |
-| Customer | `samuel.wasswa@pearlmicro.co.ug` · `grace.auma@victoriafoods.co.ug` · `ibrahim.ssali@equatorlogistics.co.ug` · others |
+| Customer | `samuel.wasswa@pearlmicro.co.ug` · `ronald.kato@savannahtel.co.ug` · `grace.auma@victoriafoods.co.ug` · `ibrahim.ssali@equatorlogistics.co.ug` · `esther.akello@rwenzoriretail.co.ug` |
 
 ---
 
