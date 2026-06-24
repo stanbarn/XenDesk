@@ -58,7 +58,8 @@ mocking Auth.js, and they are the single source of truth the routes rely on.
   (`OPEN` | `IN_PROGRESS` | `RESOLVED`), `priority` (`LOW` | `MEDIUM` | `HIGH`),
   `customerId` (owner), `agentId` (assignee, nullable).
 - **Comment** — append-only message on a ticket (`body`, `authorId`), forming a
-  chronological thread.
+  chronological thread. A customer reply to a **resolved** ticket automatically
+  reopens it (status → `OPEN`); an agent's reply does not.
 - **Tag** — category (Billing, Network, Account, Hardware, API) with a `color`;
   many-to-many with Ticket.
 

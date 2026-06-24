@@ -145,6 +145,36 @@ describe("addComment — access control", () => {
   });
 });
 
+describe("reopen on customer reply", () => {
+  async function resolvedTicket() {
+    const ticket = await createTicket(customerA, ticketInput());
+    await updateTicket(agent, ticket.id, { status: TicketStatus.RESOLVED });
+    return ticket;
+  }
+
+  it("reopens a RESOLVED ticket when its customer replies", async () => {
+    const ticket = await resolvedTicket();
+    await addComment(customerA, ticket.id, { body: "It's happening again." });
+    const reloaded = await getTicketById(agent, ticket.id);
+    expect(reloaded.status).toBe(TicketStatus.OPEN);
+  });
+
+  it("does NOT reopen when an agent replies to a RESOLVED ticket", async () => {
+    const ticket = await resolvedTicket();
+    await addComment(agent, ticket.id, { body: "Closing note for the record." });
+    const reloaded = await getTicketById(agent, ticket.id);
+    expect(reloaded.status).toBe(TicketStatus.RESOLVED);
+  });
+
+  it("leaves a non-resolved ticket's status unchanged on reply", async () => {
+    const ticket = await createTicket(customerA, ticketInput()); // OPEN
+    await updateTicket(agent, ticket.id, { status: TicketStatus.IN_PROGRESS });
+    await addComment(customerA, ticket.id, { body: "Any update?" });
+    const reloaded = await getTicketById(agent, ticket.id);
+    expect(reloaded.status).toBe(TicketStatus.IN_PROGRESS);
+  });
+});
+
 describe("getDashboardStats", () => {
   it("aggregates counts for agents", async () => {
     await createTicket(customerA, ticketInput({ priority: Priority.HIGH }));
