@@ -38,12 +38,12 @@ export async function addComment(actor: Actor, ticketId: string, input: CreateCo
       data: { body: input.body, ticketId: ticket.id, authorId: actor.id },
       select: commentSelect,
     });
-    if (reopen) {
-      await tx.ticket.update({
-        where: { id: ticket.id },
-        data: { status: TicketStatus.OPEN },
-      });
-    }
+    // Every reply counts as activity, so bump the ticket's last-updated time
+    // (and reopen it if a customer replied after resolution).
+    await tx.ticket.update({
+      where: { id: ticket.id },
+      data: { updatedAt: new Date(), ...(reopen ? { status: TicketStatus.OPEN } : {}) },
+    });
     return comment;
   });
 }

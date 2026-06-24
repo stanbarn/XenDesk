@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useSWRConfig } from "swr";
+import { Search, UserPlus } from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
 import { PriorityPill, StatusPill } from "@/components/ui/Pills";
 import { TagChip } from "@/components/ui/TagChip";
+import { api } from "@/lib/api/client";
 import { useDebounce, useTags, useTickets } from "@/lib/hooks";
 import { relativeTime } from "@/lib/format";
 import { ticketCode } from "@/lib/ui/tokens";
@@ -36,6 +39,17 @@ export function TicketTable({ title = "All tickets" }: { title?: string }) {
   const query = buildTicketQuery({ status, priority, tagId, search: debouncedSearch, pageSize: 100 });
   const { data, isLoading } = useTickets(query);
   const items = data?.items ?? [];
+
+  const { data: session } = useSession();
+  const myId = session?.user?.id;
+  const { mutate } = useSWRConfig();
+
+  async function claim(ticketId: string, e: React.MouseEvent) {
+    e.stopPropagation(); // don't open the ticket
+    if (!myId) return;
+    await api.patch(`/tickets/${ticketId}`, { agentId: myId });
+    mutate((key) => typeof key === "string" && (key.startsWith("/tickets") || key.startsWith("/dashboard")));
+  }
 
   return (
     <div className="overflow-hidden rounded-[14px] border border-line bg-surface shadow-[0_1px_2px_rgba(16,24,40,.04)]">
@@ -149,7 +163,18 @@ export function TicketTable({ title = "All tickets" }: { title?: string }) {
                 <span className="truncate text-[12.5px] text-secondary">{t.agent.name}</span>
               </span>
             ) : (
-              <span className="text-[12.5px] font-semibold text-[#B45309]">Unassigned</span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="text-[12.5px] font-semibold text-[#B45309]">Unassigned</span>
+                <button
+                  type="button"
+                  onClick={(e) => claim(t.id, e)}
+                  title="Assign to me"
+                  aria-label="Assign to me"
+                  className="text-brand hover:text-brand-dark"
+                >
+                  <UserPlus size={14} />
+                </button>
+              </span>
             )}
           </div>
           <div className="text-right text-xs text-faint">{relativeTime(t.updatedAt)}</div>

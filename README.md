@@ -59,7 +59,8 @@ mocking Auth.js, and they are the single source of truth the routes rely on.
   `customerId` (owner), `agentId` (assignee, nullable).
 - **Comment** — append-only message on a ticket (`body`, `authorId`), forming a
   chronological thread. A customer reply to a **resolved** ticket automatically
-  reopens it (status → `OPEN`); an agent's reply does not.
+  reopens it (status → `OPEN`); an agent's reply does not. Any reply bumps the
+  ticket's last-updated time.
 - **Tag** — category (Billing, Network, Account, Hardware, API) with a `color`;
   many-to-many with Ticket.
 
@@ -138,8 +139,9 @@ comes from the session, not a toggle.
 - **Sign in** — split brand panel + credentials form, with one-click demo login.
 - **Agent:** Dashboard (metrics, priority bars, unassigned queue, ticket table),
   Tickets (searchable/filterable table), Ticket detail (live thread + composer,
-  editable status/priority/assignee with one-click **Assign to me**,
-  mark-as-resolved), Customers, Tags, Settings.
+  editable status/priority/assignee, mark-as-resolved), Customers, Tags,
+  Settings. Agents can **claim** an unassigned ticket ("Assign to me") from the
+  detail page, the dashboard queue, or any table row.
 - **Customer:** My tickets (summary cards + list), New ticket (validated form),
   Ticket detail (read-only controls + reply), Help center (FAQ accordion).
 

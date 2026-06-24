@@ -1,11 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowUp, CheckCircle2, Inbox } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useSWRConfig } from "swr";
+import { AlertTriangle, ArrowUp, CheckCircle2, Inbox, UserPlus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { Card } from "@/components/ui/Card";
 import { TicketTable } from "@/components/tickets/TicketTable";
+import { api } from "@/lib/api/client";
 import { useDashboardStats, useTickets } from "@/lib/hooks";
 import { PRIORITY_STYLE } from "@/lib/ui/tokens";
 import { ticketCode } from "@/lib/ui/tokens";
@@ -53,6 +56,16 @@ export function AgentDashboard({ firstName }: { firstName: string }) {
   const router = useRouter();
   const { data: stats } = useDashboardStats();
   const { data: unassigned } = useTickets("?assignment=unassigned&pageSize=4");
+
+  const { data: session } = useSession();
+  const myId = session?.user?.id;
+  const { mutate } = useSWRConfig();
+
+  async function claim(ticketId: string) {
+    if (!myId) return;
+    await api.patch(`/tickets/${ticketId}`, { agentId: myId });
+    mutate((key) => typeof key === "string" && (key.startsWith("/tickets") || key.startsWith("/dashboard")));
+  }
 
   const bars = [
     { label: "High", count: stats?.byPriority.HIGH ?? 0, color: PRIORITY_STYLE.HIGH.dot },
@@ -104,10 +117,12 @@ export function AgentDashboard({ firstName }: { firstName: string }) {
             </span>
           </div>
           {unassigned?.items.map((t) => (
-            <button
+            <div
               key={t.id}
+              role="button"
+              tabIndex={0}
               onClick={() => router.push(`/tickets/${t.id}`)}
-              className="flex w-full items-center gap-2.5 border-t border-line-soft px-1 py-2.5 text-left hover:bg-row-hover"
+              className="group flex w-full cursor-pointer items-center gap-2.5 border-t border-line-soft px-1 py-2.5 text-left hover:bg-row-hover"
             >
               <span
                 className="h-[7px] w-[7px] flex-shrink-0 rounded-full"
@@ -119,7 +134,18 @@ export function AgentDashboard({ firstName }: { firstName: string }) {
               <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">
                 {t.title}
               </span>
-            </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void claim(t.id);
+                }}
+                className="flex flex-shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11.5px] font-semibold text-brand opacity-0 transition hover:bg-brand-tint group-hover:opacity-100"
+              >
+                <UserPlus size={13} />
+                Assign to me
+              </button>
+            </div>
           ))}
           {unassigned && unassigned.items.length === 0 && (
             <div className="border-t border-line-soft py-6 text-center text-[13px] text-faint">

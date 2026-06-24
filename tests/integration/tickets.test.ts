@@ -173,6 +173,17 @@ describe("reopen on customer reply", () => {
     const reloaded = await getTicketById(agent, ticket.id);
     expect(reloaded.status).toBe(TicketStatus.IN_PROGRESS);
   });
+
+  it("bumps the ticket's updatedAt on any reply", async () => {
+    const ticket = await createTicket(customerA, ticketInput());
+    const past = new Date(Date.now() - 60_000);
+    await prisma.ticket.update({ where: { id: ticket.id }, data: { updatedAt: past } });
+
+    await addComment(customerA, ticket.id, { body: "Still an issue." });
+
+    const reloaded = await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id } });
+    expect(reloaded.updatedAt.getTime()).toBeGreaterThan(past.getTime());
+  });
 });
 
 describe("getDashboardStats", () => {
