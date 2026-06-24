@@ -17,7 +17,15 @@ import type { Priority, Role, TicketStatus } from "@/lib/types";
 
 const SECTION = "mb-1.5 text-[11px] font-bold tracking-[0.04em] text-faint";
 
-export function TicketDetailView({ id, role }: { id: string; role: Role }) {
+export function TicketDetailView({
+  id,
+  role,
+  currentUserId,
+}: {
+  id: string;
+  role: Role;
+  currentUserId: string;
+}) {
   const isAgent = role === "AGENT";
   const { data: ticket, error, isLoading, mutate } = useTicket(id);
   const { data: agents } = useAgents();
@@ -205,21 +213,32 @@ export function TicketDetailView({ id, role }: { id: string; role: Role }) {
 
           <div className={SECTION}>ASSIGNEE</div>
           {isAgent ? (
-            <Select
-              value={ticket.agent?.id ?? "unassigned"}
-              disabled={saving}
-              onChange={(e) =>
-                patch({ agentId: e.target.value === "unassigned" ? null : e.target.value })
-              }
-              className="mb-[18px]"
-            >
-              <option value="unassigned">Unassigned</option>
-              {agents?.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </Select>
+            <div className="mb-[18px]">
+              <Select
+                value={ticket.agent?.id ?? "unassigned"}
+                disabled={saving}
+                onChange={(e) =>
+                  patch({ agentId: e.target.value === "unassigned" ? null : e.target.value })
+                }
+              >
+                <option value="unassigned">Unassigned</option>
+                {agents?.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </Select>
+              {ticket.agent?.id !== currentUserId && (
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => patch({ agentId: currentUserId })}
+                  className="mt-2 text-[12.5px] font-semibold text-brand hover:underline disabled:opacity-60"
+                >
+                  Assign to me
+                </button>
+              )}
+            </div>
           ) : (
             <div className="mb-[18px] text-[13.5px] font-semibold text-secondary">
               {ticket.agent?.name ?? "Unassigned"}

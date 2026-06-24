@@ -138,7 +138,8 @@ comes from the session, not a toggle.
 - **Sign in** — split brand panel + credentials form, with one-click demo login.
 - **Agent:** Dashboard (metrics, priority bars, unassigned queue, ticket table),
   Tickets (searchable/filterable table), Ticket detail (live thread + composer,
-  editable status/priority/assignee, mark-as-resolved), Customers, Tags, Settings.
+  editable status/priority/assignee with one-click **Assign to me**,
+  mark-as-resolved), Customers, Tags, Settings.
 - **Customer:** My tickets (summary cards + list), New ticket (validated form),
   Ticket detail (read-only controls + reply), Help center (FAQ accordion).
 

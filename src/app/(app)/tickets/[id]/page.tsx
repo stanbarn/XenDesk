@@ -8,5 +8,5 @@ export default async function TicketDetailPage({
 }) {
   const user = await requireRole();
   const { id } = await params;
-  return <TicketDetailView id={id} role={user.role} />;
+  return <TicketDetailView id={id} role={user.role} currentUserId={user.id} />;
 }
