@@ -119,6 +119,17 @@ describe("updateTicket — state transitions", () => {
       updateTicket(agent, ticket.id, { agentId: customerB.id }),
     ).rejects.toBeInstanceOf(BadRequestError);
   });
+
+  it("replaces the ticket's tags (set semantics)", async () => {
+    const tag = await prisma.tag.create({ data: { name: "Lifecycle", color: "#0E9F6E" } });
+    const ticket = await createTicket(customerA, ticketInput());
+
+    const tagged = await updateTicket(agent, ticket.id, { tagIds: [tag.id] });
+    expect(tagged.tags.map((t) => t.id)).toEqual([tag.id]);
+
+    const cleared = await updateTicket(agent, ticket.id, { tagIds: [] });
+    expect(cleared.tags).toEqual([]);
+  });
 });
 
 describe("deleteTicket", () => {

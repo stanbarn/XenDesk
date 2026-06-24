@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input, Label } from "@/components/ui/Field";
 import { api, ApiError } from "@/lib/api/client";
 import { useTags } from "@/lib/hooks";
+import type { TagWithCount } from "@/lib/types";
 import { cn } from "@/lib/cn";
 
 // Brand-aligned palette for new tags (the seeded five + a few extras).
@@ -36,6 +38,19 @@ export function TagsView() {
       setError(err instanceof ApiError ? err.message : "Could not create the tag.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function removeTag(tag: TagWithCount) {
+    const note = tag._count.tickets
+      ? ` It will be removed from ${tag._count.tickets} ticket(s).`
+      : "";
+    if (!window.confirm(`Delete the tag "${tag.name}"?${note}`)) return;
+    try {
+      await api.del(`/tags/${tag.id}`);
+      await mutate();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not delete the tag.");
     }
   }
 
@@ -97,9 +112,18 @@ export function TagsView() {
           >
             <div className="mb-3.5 flex items-center gap-2.5">
               <span className="h-[11px] w-[11px] rounded-full" style={{ background: tag.color }} />
-              <span className="text-[15px] font-bold" style={{ color: tag.color }}>
+              <span className="flex-1 text-[15px] font-bold" style={{ color: tag.color }}>
                 {tag.name}
               </span>
+              <button
+                type="button"
+                onClick={() => removeTag(tag)}
+                aria-label={`Delete ${tag.name}`}
+                title="Delete tag"
+                className="text-faint transition hover:text-[#C2341D]"
+              >
+                <Trash2 size={15} />
+              </button>
             </div>
             <div className="font-display text-[26px] font-bold text-ink">{tag._count.tickets}</div>
             <div className="mt-0.5 text-[12.5px] text-muted">tagged tickets</div>

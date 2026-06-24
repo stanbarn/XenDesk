@@ -139,9 +139,10 @@ comes from the session, not a toggle.
 - **Sign in** — split brand panel + credentials form, with one-click demo login.
 - **Agent:** Dashboard (metrics, priority bars, unassigned queue, ticket table),
   Tickets (searchable/filterable table), Ticket detail (live thread + composer,
-  editable status/priority/assignee, mark-as-resolved), Customers, Tags,
-  Settings. Agents can **claim** an unassigned ticket ("Assign to me") from the
-  detail page, the dashboard queue, or any table row.
+  editable status/priority/assignee/tags, mark-as-resolved), Customers, Tags
+  (create/delete), Settings (incl. agent onboarding). Agents can **claim** an
+  unassigned ticket ("Assign to me") from the detail page, the dashboard queue,
+  or any table row.
 - **Customer:** My tickets (summary cards + list), New ticket (validated form),
   Ticket detail (read-only controls + reply), Help center (FAQ accordion).
 
@@ -258,9 +259,6 @@ No secrets are committed; `.env` is gitignored and only `.env.example` ships.
 - **Real-time** is polling-based (SWR revalidation of the ticket thread and
   dashboard) rather than WebSockets — reliable on Vercel serverless and a
   deliberate trade of latency for simplicity.
-- **Tag management.** Agents can create tags (Tags page → New tag). Deleting a
-  tag and editing a ticket's tags after creation are supported by the API
-  (`DELETE /api/tags/:id`, `PATCH …{tagIds}`) but not yet surfaced in the UI.
 - **Settings toggles** and the sign-in **"Remember me"** are interactive but
   presentational — settings aren't persisted yet, and the JWT session uses a
   fixed lifetime regardless of the checkbox (matching the design's scope).

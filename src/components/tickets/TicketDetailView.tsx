@@ -10,7 +10,7 @@ import { Select } from "@/components/ui/Field";
 import { PriorityPill, StatusPill } from "@/components/ui/Pills";
 import { TagChip } from "@/components/ui/TagChip";
 import { api } from "@/lib/api/client";
-import { useAgents, useTicket } from "@/lib/hooks";
+import { useAgents, useTags, useTicket } from "@/lib/hooks";
 import { formatDate, relativeTime } from "@/lib/format";
 import { PRIORITY_ORDER, PRIORITY_LABEL, STATUS_ORDER, STATUS_LABEL, ticketCode } from "@/lib/ui/tokens";
 import type { Priority, Role, TicketStatus } from "@/lib/types";
@@ -29,6 +29,7 @@ export function TicketDetailView({
   const isAgent = role === "AGENT";
   const { data: ticket, error, isLoading, mutate } = useTicket(id);
   const { data: agents } = useAgents();
+  const { data: allTags } = useTags();
 
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
@@ -53,6 +54,13 @@ export function TicketDetailView({
     } finally {
       setSaving(false);
     }
+  }
+
+  function toggleTag(tagId: string, active: boolean) {
+    if (!ticket) return;
+    const current = ticket.tags.map((t) => t.id);
+    const next = active ? current.filter((tid) => tid !== tagId) : [...current, tagId];
+    void patch({ tagIds: next });
   }
 
   async function sendReply() {
@@ -256,15 +264,42 @@ export function TicketDetailView({
             </div>
           </div>
 
-          {ticket.tags.length > 0 && (
+          {isAgent ? (
             <>
               <div className="mb-2.5 text-[11px] font-bold tracking-[0.04em] text-faint">TAGS</div>
               <div className="mb-[18px] flex flex-wrap gap-1.5">
-                {ticket.tags.map((tag) => (
-                  <TagChip key={tag.id} name={tag.name} color={tag.color} />
-                ))}
+                {(allTags ?? []).map((tag) => {
+                  const active = ticket.tags.some((t) => t.id === tag.id);
+                  return (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      disabled={saving}
+                      onClick={() => toggleTag(tag.id, active)}
+                      className="rounded-[7px] px-2 py-0.5 text-[11.5px] font-semibold transition disabled:opacity-60"
+                      style={
+                        active
+                          ? { color: tag.color, background: `${tag.color}1f`, border: `1px solid ${tag.color}` }
+                          : { color: "#667085", background: "#fff", border: "1px solid #E2E8F0" }
+                      }
+                    >
+                      {tag.name}
+                    </button>
+                  );
+                })}
               </div>
             </>
+          ) : (
+            ticket.tags.length > 0 && (
+              <>
+                <div className="mb-2.5 text-[11px] font-bold tracking-[0.04em] text-faint">TAGS</div>
+                <div className="mb-[18px] flex flex-wrap gap-1.5">
+                  {ticket.tags.map((tag) => (
+                    <TagChip key={tag.id} name={tag.name} color={tag.color} />
+                  ))}
+                </div>
+              </>
+            )
           )}
 
           <div className="mb-4 h-px bg-divider" />
